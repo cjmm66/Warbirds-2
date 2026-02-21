@@ -13,6 +13,13 @@ public class AAGunController : MonoBehaviour
     [Header("Firing")]
     [SerializeField] private float projectileSpeed = 20f;
     [SerializeField] private bool barrelForwardIsUp;
+    [SerializeField] private float shotDelaySeconds = 0.25f;
+
+    [Header("Touch Dead Zone")]
+    [Tooltip("Bottom area of the screen that will ignore firing input. 0.5 means lower half.")]
+    [SerializeField] private float lowerDeadZoneHeightPercent = 0.5f;
+
+    private float nextAllowedShotTime;
 
     private void Awake()
     {
@@ -40,9 +47,20 @@ public class AAGunController : MonoBehaviour
             return;
         }
 
+        if (IsInLowerDeadZone(touchScreenPosition))
+        {
+            return;
+        }
+
+        if (Time.time < nextAllowedShotTime)
+        {
+            return;
+        }
+
         Vector2 touchWorldPosition = targetCamera.ScreenToWorldPoint(touchScreenPosition);
         RotateBarrelToPoint(touchWorldPosition);
         FireTowards(touchWorldPosition);
+        nextAllowedShotTime = Time.time + shotDelaySeconds;
     }
 
     private bool TryGetPointerDownPosition(out Vector2 touchPosition)
@@ -83,6 +101,13 @@ public class AAGunController : MonoBehaviour
         }
 
         return EventSystem.current.IsPointerOverGameObject();
+    }
+
+    private bool IsInLowerDeadZone(Vector2 screenPosition)
+    {
+        float clampedPercent = Mathf.Clamp01(lowerDeadZoneHeightPercent);
+        float deadZoneTopY = Screen.height * clampedPercent;
+        return screenPosition.y <= deadZoneTopY;
     }
 
     private void RotateBarrelToPoint(Vector2 targetPoint)
