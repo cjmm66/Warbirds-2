@@ -23,9 +23,12 @@ public class ArtillaryController : MonoBehaviour
 
     [Header("Barrel Visual")]
     [SerializeField] private Transform barrelPivot;
-
-    
     [SerializeField] private bool barrelForwardIsUp;
+    [SerializeField] private float barrelRotateSpeedDegreesPerSecond = 120f;
+
+    [Header("Aim Cursor")]
+    [SerializeField] private Transform aimCursor;
+    [SerializeField] private float aimCursorDistance = 8f;
 
     [Header("Delayed Shot")]
     [SerializeField] private float fireDelaySeconds = 3f;
@@ -37,6 +40,12 @@ public class ArtillaryController : MonoBehaviour
     [SerializeField] private LayerMask predictionHitMask = ~0;
 
     private Coroutine pendingFire;
+    private float currentBarrelAngle;
+
+    private void Start()
+    {
+        currentBarrelAngle = GetAngle();
+    }
 
     private void Update()
     {
@@ -45,8 +54,14 @@ public class ArtillaryController : MonoBehaviour
             return;
         }
 
-        float angle = GetAngle();
-        barrelPivot.localRotation = Quaternion.Euler(0f, 0f, angle);
+        float targetAngle = GetAngle();
+        currentBarrelAngle = Mathf.MoveTowardsAngle(
+            currentBarrelAngle,
+            targetAngle,
+            barrelRotateSpeedDegreesPerSecond * Time.deltaTime);
+
+        barrelPivot.localRotation = Quaternion.Euler(0f, 0f, currentBarrelAngle);
+        UpdateAimCursor();
     }
 
     public void Fire()
@@ -190,5 +205,17 @@ public class ArtillaryController : MonoBehaviour
         }
 
         return Mathf.Lerp(minPower, maxPower, powerSlider.value);
+    }
+
+    private void UpdateAimCursor()
+    {
+        if (aimCursor == null || barrelPivot == null)
+        {
+            return;
+        }
+
+        Vector3 origin = firePoint != null ? firePoint.position : barrelPivot.position;
+        Vector3 forward = barrelForwardIsUp ? barrelPivot.up : barrelPivot.right;
+        aimCursor.position = origin + forward * aimCursorDistance;
     }
 }
