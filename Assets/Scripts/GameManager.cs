@@ -1,32 +1,25 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
     [Header("Enemy Setup")]
-    [Tooltip("Add your enemy prefabs here (for example 3 types).")]
     [SerializeField] private GameObject[] enemyPrefabs;
 
     [Header("Wave Settings")]
     [SerializeField] private int initialEnemyCount = 3;
     [SerializeField] private int enemyIncreasePerWave = 1;
+    [SerializeField] private float spawnDelaySeconds = 0.5f;
 
-    [Header("Spawn Area")]
-    [SerializeField] private Camera targetCamera;
-    [SerializeField] private float horizontalPadding = 0.05f;
-    [SerializeField] private float upperHalfMinViewportY = 0.5f;
-    [SerializeField] private float upperHalfMaxViewportY = 0.95f;
+    [Header("Spawn Points (Off Screen)")]
+    [SerializeField] private Transform leftSpawnPoint;
+    [SerializeField] private Transform rightSpawnPoint;
+    [SerializeField] private float randomYOffset = 1.5f;
 
     private readonly List<GameObject> aliveEnemies = new List<GameObject>();
     private int currentWave = 0;
-
-    private void Awake()
-    {
-        if (targetCamera == null)
-        {
-            targetCamera = Camera.main;
-        }
-    }
+    private bool isSpawningWave;
 
     private void Start()
     {
@@ -37,7 +30,7 @@ public class GameManager : MonoBehaviour
     {
         aliveEnemies.RemoveAll(enemy => enemy == null);
 
-        if (aliveEnemies.Count == 0)
+        if (!isSpawningWave && aliveEnemies.Count == 0)
         {
             StartNextWave();
         }
@@ -51,50 +44,42 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        if (targetCamera == null)
+        if (leftSpawnPoint == null || rightSpawnPoint == null)
         {
-            Debug.LogWarning("GameManager: No camera found for spawning.");
+            Debug.LogWarning("GameManager: Assign both leftSpawnPoint and rightSpawnPoint.");
             return;
         }
 
         currentWave++;
         int enemiesToSpawn = Mathf.Max(1, initialEnemyCount + (currentWave - 1) * enemyIncreasePerWave);
+        StartCoroutine(SpawnWave(enemiesToSpawn));
+    }
+
+    private IEnumerator SpawnWave(int enemiesToSpawn)
+    {
+        isSpawningWave = true;
 
         for (int i = 0; i < enemiesToSpawn; i++)
         {
             GameObject prefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
-            Vector3 spawnPosition = GetRandomUpperHalfPosition();
+            Vector3 spawnPosition = GetRandomSpawnPosition();
             GameObject spawnedEnemy = Instantiate(prefab, spawnPosition, Quaternion.identity);
             aliveEnemies.Add(spawnedEnemy);
+
+            if (spawnDelaySeconds > 0f)
+            {
+                yield return new WaitForSeconds(spawnDelaySeconds);
+            }
         }
+
+        isSpawningWave = false;
     }
 
-    private Vector3 GetRandomUpperHalfPosition()
+    private Vector3 GetRandomSpawnPosition()
     {
-        float minX = Mathf.Clamp01(horizontalPadding);
-        float maxX = Mathf.Clamp01(1f - horizontalPadding);
-        float minY = Mathf.Clamp01(upperHalfMinViewportY);
-        float maxY = Mathf.Clamp01(upperHalfMaxViewportY);
-
-        if (maxX <= minX)
-        {
-            minX = 0.05f;
-            maxX = 0.95f;
-        }
-
-        if (maxY <= minY)
-        {
-            minY = 0.5f;
-            maxY = 0.95f;
-        }
-
-        Vector3 viewportPoint = new Vector3(
-            Random.Range(minX, maxX),
-            Random.Range(minY, maxY),
-            Mathf.Abs(targetCamera.transform.position.z));
-
-        Vector3 worldPoint = targetCamera.ViewportToWorldPoint(viewportPoint);
-        worldPoint.z = 0f;
-        return worldPoint;
+        Transform baseSpawn = Random.value < 0.5f ? leftSpawnPoint : rightSpawnPoint;
+        Vector3 pos = baseSpawn.position;
+        pos.y += Random.Range(-Mathf.Abs(randomYOffset), Mathf.Abs(randomYOffset));
+        return pos;
     }
 }
