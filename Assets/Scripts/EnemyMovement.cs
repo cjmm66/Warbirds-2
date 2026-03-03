@@ -1,10 +1,41 @@
 using UnityEngine;
 
+/// <summary>
+/// Flight pattern types for enemy aircraft.
+/// </summary>
+public enum FlightPattern
+{
+    Horizontal,
+    DiveBomb,
+    Zigzag
+}
+
+/// <summary>
+/// Controls enemy aircraft movement with multiple flight patterns.
+/// Integrates with HealthSystem for death state.
+/// </summary>
 public class EnemyMovement : MonoBehaviour
 {
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 3f;
     [SerializeField] private bool startMovingRight = true;
+
+    [Header("Flight Pattern")]
+    [SerializeField] private FlightPattern flightPattern = FlightPattern.Horizontal;
+
+    [Header("Zigzag Settings")]
+    [Tooltip("Vertical amplitude of the zigzag oscillation.")]
+    [SerializeField] private float zigzagAmplitude = 1.5f;
+    [Tooltip("Speed of the zigzag oscillation.")]
+    [SerializeField] private float zigzagFrequency = 2f;
+
+    [Header("Dive Bomb Settings")]
+    [Tooltip("How far the aircraft descends during a dive.")]
+    [SerializeField] private float diveDepth = 3f;
+    [Tooltip("Duration of one dive cycle in seconds.")]
+    [SerializeField] private float diveCycleDuration = 3f;
+    [Tooltip("Auto-finds Player tag if empty.")]
+    [SerializeField] private Transform diveTarget;
 
     [Header("Turn Around Limits")]
     [Tooltip("How far past the camera edge the plane goes before flipping direction.")]
@@ -14,6 +45,11 @@ public class EnemyMovement : MonoBehaviour
     [SerializeField] private GameObject targetCamera;
 
     private float direction = 1f;
+    private float baseYPosition;
+    private float zigzagTimer;
+    private float diveTimer;
+    private bool isDiving;
+    private HealthSystem healthSystem;
 
     private void Awake()
     {
@@ -24,13 +60,96 @@ public class EnemyMovement : MonoBehaviour
             targetCamera = Camera.main.gameObject;
         }
 
+        if (diveTarget == null)
+        {
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+            {
+                diveTarget = player.transform;
+            }
+        }
+
+        healthSystem = GetComponent<HealthSystem>();
+        baseYPosition = transform.position.y;
+
         ApplyFacing();
+    }
+
+    private void Start()
+    {
+        // If HealthSystem is attached, listen for death to trigger destruction
+        if (healthSystem != null)
+        {
+            healthSystem.onDeath.AddListener(HandleDeath);
+        }
     }
 
     private void Update()
     {
+        // Stop moving if dead
+        if (healthSystem != null && healthSystem.IsDead)
+        {
+            return;
+        }
+
+        switch (flightPattern)
+        {
+            case FlightPattern.Horizontal:
+                MoveHorizontal();
+                break;
+            case FlightPattern.Zigzag:
+                MoveZigzag();
+                break;
+            case FlightPattern.DiveBomb:
+                MoveDiveBomb();
+                break;
+        }
+
+        CheckTurnAround();
+    }
+
+    // ---------- Movement Patterns ----------
+
+    private void MoveHorizontal()
+    {
+        transform.Translate(Vector3.right * (direction * moveSpeed * Time.deltaTime), Space.World);
+    }
+
+    private void MoveZigzag()
+    {
+        // Horizontal movement
         transform.Translate(Vector3.right * (direction * moveSpeed * Time.deltaTime), Space.World);
 
+        // Sinusoidal vertical oscillation
+        zigzagTimer += Time.deltaTime * zigzagFrequency;
+        float yOffset = Mathf.Sin(zigzagTimer) * zigzagAmplitude;
+
+        Vector3 pos = transform.position;
+        pos.y = baseYPosition + yOffset;
+        transform.position = pos;
+    }
+
+    private void MoveDiveBomb()
+    {
+        // Horizontal movement
+        transform.Translate(Vector3.right * (direction * moveSpeed * Time.deltaTime), Space.World);
+
+        // Periodic dive towards the ground and pull-up
+        diveTimer += Time.deltaTime;
+        float cycleProgress = (diveTimer % diveCycleDuration) / diveCycleDuration;
+
+        // Smooth dive: down in first half, up in second half (sine curve)
+        float diveOffset = Mathf.Sin(cycleProgress * Mathf.PI) * diveDepth;
+
+        Vector3 pos = transform.position;
+        pos.y = baseYPosition - diveOffset;
+        transform.position = pos;
+    }
+
+    // ---------- Turn Around ----------
+
+    private void CheckTurnAround()
+    {
         float xLimit = GetTurnAroundXLimit();
         if (xLimit <= 0f)
         {
@@ -74,5 +193,22 @@ public class EnemyMovement : MonoBehaviour
         Vector3 scale = transform.localScale;
         scale.x = Mathf.Abs(scale.x) * Mathf.Sign(direction);
         transform.localScale = scale;
+    }
+
+    // ---------- Death ----------
+
+    private void HandleDeath()
+    {
+        // Could trigger explosion effect here in the future
+        Debug.Log($"EnemyMovement: {gameObject.name} destroyed!");
+        Destroy(gameObject);
+    }
+
+    /// <summary>
+    /// Set the flight pattern at runtime (e.g., GameManager sets this based on wave).
+    /// </summary>
+    public void SetFlightPattern(FlightPattern pattern)
+    {
+        flightPattern = pattern;
     }
 }

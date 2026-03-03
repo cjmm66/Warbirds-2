@@ -10,6 +10,10 @@ public class AAGunController : MonoBehaviour
     [SerializeField] private Transform firePoint;
     [SerializeField] private Rigidbody2D projectilePrefab;
 
+    [Header("Ammo")]
+    [Tooltip("Optional. If assigned, ammo is consumed per shot.")]
+    [SerializeField] private AmmoSystem ammoSystem;
+
     [Header("Firing")]
     [SerializeField] private float projectileSpeed = 20f;
     [SerializeField] private bool barrelForwardIsUp;
@@ -53,6 +57,18 @@ public class AAGunController : MonoBehaviour
         }
 
         if (Time.time < nextAllowedShotTime)
+        {
+            return;
+        }
+
+        // Block firing if game is not active
+        if (GameStateManager.Instance != null && !GameStateManager.Instance.IsGameplayActive())
+        {
+            return;
+        }
+
+        // Consume ammo if AmmoSystem is assigned
+        if (ammoSystem != null && !ammoSystem.TryConsumeAmmo())
         {
             return;
         }

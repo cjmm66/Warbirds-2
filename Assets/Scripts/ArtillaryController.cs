@@ -3,6 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// Shell types for artillery. Expand as needed.
+/// </summary>
+public enum ShellType
+{
+    Standard,
+    HighExplosive,
+    Smoke
+}
+
 public class ArtillaryController : MonoBehaviour
 {
     [Header("UI")]
@@ -37,6 +47,13 @@ public class ArtillaryController : MonoBehaviour
     [Header("Recoil")]
     [SerializeField] private Rigidbody2D recoilBody;
     [SerializeField] private float recoilImpulse = 0.6f;
+
+    [Header("Ammo")]
+    [Tooltip("Optional. If assigned, shells are consumed per shot.")]
+    [SerializeField] private AmmoSystem ammoSystem;
+
+    [Header("Shell Selection")]
+    [SerializeField] private ShellType currentShellType = ShellType.Standard;
 
     [Header("Prediction")]
     [SerializeField] private float predictionStep = 0.05f;
@@ -76,12 +93,25 @@ public class ArtillaryController : MonoBehaviour
             return;
         }
 
+        // Block firing if game is not active
+        if (GameStateManager.Instance != null && !GameStateManager.Instance.IsGameplayActive())
+        {
+            return;
+        }
+
+        // Consume ammo if AmmoSystem is assigned
+        if (ammoSystem != null && !ammoSystem.TryConsumeAmmo())
+        {
+            Debug.Log("ArtillaryController: No ammo remaining.");
+            return;
+        }
+
         Vector2 origin = firePoint.position;
         Vector2 launchDirection = GetLaunchDirection();
         float launchSpeedFromPower = GetPower();
 
         List<Vector2> predictedPath = CalculatePredictedPath(origin, launchDirection * launchSpeedFromPower, out Vector2 predictedHitPoint);
-        Debug.Log($"Predicted hit point: {predictedHitPoint}");
+        Debug.Log($"Predicted hit point: {predictedHitPoint} | Shell: {currentShellType}");
 
         if (pendingFire != null)
         {
@@ -89,6 +119,22 @@ public class ArtillaryController : MonoBehaviour
         }
 
         pendingFire = StartCoroutine(FireAfterDelay(predictedPath, launchDirection));
+    }
+
+    /// <summary>
+    /// Set the current shell type (called from UI shell selection button).
+    /// </summary>
+    public void SetShellType(ShellType shellType)
+    {
+        currentShellType = shellType;
+    }
+
+    /// <summary>
+    /// Get the current shell type.
+    /// </summary>
+    public ShellType GetShellType()
+    {
+        return currentShellType;
     }
 
     private IEnumerator FireAfterDelay(List<Vector2> path, Vector2 launchDirection)

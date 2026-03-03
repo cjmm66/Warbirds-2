@@ -192,7 +192,7 @@ GameObject:
   - component: {fileID: 234577991}
   m_Layer: 0
   m_Name: Truck
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -211,6 +211,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   moveSpeed: 5
   rb: {fileID: 234577986}
+  virtualJoystick: {fileID: 0}
+  clampToScreen: 1
+  screenEdgePadding: 0.5
 --- !u!50 &234577986
 Rigidbody2D:
   serializedVersion: 5
@@ -375,6 +378,7 @@ MonoBehaviour:
   barrelPivot: {fileID: 1704794020}
   firePoint: {fileID: 490153076}
   projectilePrefab: {fileID: 6838270503654168382, guid: 496558983ec222b4abe06f1d2fedbe3b, type: 3}
+  ammoSystem: {fileID: 0}
   projectileSpeed: 20
   barrelForwardIsUp: 0
   shotDelaySeconds: 0.25
@@ -1325,9 +1329,17 @@ MonoBehaviour:
   initialEnemyCount: 3
   enemyIncreasePerWave: 1
   spawnDelaySeconds: 0.5
+  maxWaves: 5
   leftSpawnPoint: {fileID: 1207037237}
   rightSpawnPoint: {fileID: 335388339}
   randomYOffset: 1.5
+  playerHealth: {fileID: 0}
+  onWaveChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onEnemyKilled:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!4 &1070552610
 Transform:
   m_ObjectHideFlags: 0
@@ -2235,6 +2247,115 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
+--- !u!1 &1827685980
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1827685985}
+  - component: {fileID: 1827685984}
+  - component: {fileID: 1827685983}
+  - component: {fileID: 1827685982}
+  - component: {fileID: 1827685981}
+  m_Layer: 0
+  m_Name: Managers
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1827685981
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1827685980}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca25ba8c2481f3441ad480f06aabe3ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LevelManager
+  mainMenuScene: MainMenu
+  defenseScene: Prototype1
+  attackScene: ArtillaryPrototype
+  fadeOverlay: {fileID: 0}
+  fadeDuration: 0.5
+--- !u!114 &1827685982
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1827685980}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfd1be2eab17e424ebff3ad946d1ea9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FeedbackManager
+  shakeDuration: 0.15
+  shakeMagnitude: 0.2
+  cameraTransform: {fileID: 519420032}
+  damageFlashOverlay: {fileID: 0}
+  flashDuration: 0.3
+  flashMaxAlpha: 0.5
+  hitMarkerPrefab: {fileID: 0}
+  hitMarkerLifetime: 0.5
+  killConfirmPrefab: {fileID: 0}
+  killConfirmLifetime: 1
+--- !u!114 &1827685983
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1827685980}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2696664de03285042b9dbb0fdb93cd82, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScoreManager
+  pointsPerKill: 100
+  streakBonusMultiplier: 50
+  twoStarThreshold: 500
+  threeStarThreshold: 1000
+  onScoreChanged:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &1827685984
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1827685980}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd8dc247bfd6bf345923ffa769a8c97e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameStateManager
+  initialState: 1
+  onStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!4 &1827685985
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1827685980}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -8.45821, y: -2.8621, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1832930522
 GameObject:
   m_ObjectHideFlags: 0
@@ -2767,3 +2888,4 @@ SceneRoots:
   - {fileID: 35815317}
   - {fileID: 1207037237}
   - {fileID: 335388339}
+  - {fileID: 1827685985}
