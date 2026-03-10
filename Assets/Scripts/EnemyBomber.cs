@@ -34,6 +34,9 @@ public class EnemyBomber : MonoBehaviour
     private Vector3 previousPosition;
     private Vector2 estimatedVelocity;
 
+    /// <summary>Read by EnemyBomb to determine spawn orientation.</summary>
+    public Vector2 EstimatedVelocity => estimatedVelocity;
+
     private void Awake()
     {
         if (playerTarget == null)
@@ -111,6 +114,13 @@ public class EnemyBomber : MonoBehaviour
     {
         Vector3 spawnPos = bombDropPoint.position;
         GameObject bomb = Instantiate(bombPrefab, spawnPos, Quaternion.identity);
+
+        // Pass self so EnemyBomb can read flight direction for spawn-rotation
+        EnemyBomb enemyBomb = bomb.GetComponent<EnemyBomb>();
+        if (enemyBomb != null)
+        {
+            enemyBomb.parentBomber = this;
+        }
 
         // Add downward velocity + inherit horizontal movement from parent
         Rigidbody2D bombRb = bomb.GetComponent<Rigidbody2D>();

@@ -181,7 +181,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyBomb
   damage: 1
   lifetimeSeconds: 6
-  gravityScale: 0.35
-  rotationSpeed: 60
-  tipAngleOffset: -90
+  gravityScale: 0.25
+  torqueAmount: 0.015
+  noseDiveStrength: 0.015
+  leftFacingSpawnRotation: 90
+  explosionPrefab: {fileID: 0}
+  explosionLifetime: 4
   trail: {fileID: 0}
+  groundContactFilter:
+    useTriggers: 0
+    useLayerMask: 0
+    useDepth: 0
+    useOutsideDepth: 0
+    useNormalAngle: 0
+    useOutsideNormalAngle: 0
+    layerMask:
+      serializedVersion: 2
+      m_Bits: 0
+    minDepth: 0
+    maxDepth: 0
+    minNormalAngle: 0
+    maxNormalAngle: 0
+  parentBomber: {fileID: 0}
