@@ -7,6 +7,7 @@ using UnityEngine;
 /// </summary>
 public class PlayerController : MonoBehaviour
 {
+    [SerializeField] private SpriteRenderer sprite;
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private Rigidbody2D rb;
@@ -20,12 +21,17 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private bool clampToScreen = true;
     [Tooltip("Extra padding from screen edge in world units.")]
     [SerializeField] private float screenEdgePadding = 0.5f;
+    [SerializeField] bool facingRight = true;
 
     private bool moveLeftPressed;
     private bool moveRightPressed;
 
     private void Awake()
     {
+        if (sprite == null)
+        {
+            sprite = GetComponent<SpriteRenderer>();
+        }
         if (rb == null)
         {
             rb = GetComponent<Rigidbody2D>();
@@ -34,6 +40,7 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
+            SpriteFaceFlip();
         float input = GetMovementInput();
 
         if (rb != null)
@@ -53,27 +60,18 @@ public class PlayerController : MonoBehaviour
 
     private float GetMovementInput()
     {
-        // Virtual joystick takes priority if assigned and active
-        if (virtualJoystick != null)
-        {
-            float joystickInput = virtualJoystick.InputAxis.x;
-            if (Mathf.Abs(joystickInput) > 0.01f)
-            {
-                return Mathf.Clamp(joystickInput, -1f, 1f);
-            }
-        }
-
-        // Fallback to button-based input
         float buttonInput = 0f;
 
         if (moveLeftPressed)
         {
             buttonInput -= 1f;
+            facingRight = false;
         }
 
         if (moveRightPressed)
         {
             buttonInput += 1f;
+            facingRight = true;
         }
 
         return buttonInput;
@@ -117,5 +115,17 @@ public class PlayerController : MonoBehaviour
     public void OnRightButtonUp()
     {
         moveRightPressed = false;
+    }
+
+    void SpriteFaceFlip()
+    {
+        if (facingRight)
+        {
+        sprite.flipX = false;
+        }
+        else
+        {
+       sprite.flipX = true;
+        }
     }
 }
